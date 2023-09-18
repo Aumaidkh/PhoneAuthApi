@@ -2,16 +2,19 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
+import multer from 'multer';
 
 const app = express();
 const port = process.env.PORT || 3000;
+var forms = multer();
 
 const SERVICE_PLAN_ID = '0f9ff0a88b2e454c9a99d8f7aa956aae';
 const API_TOKEN = '408afafaf0df46c5a29feb06f5f38c11';
 const SINCH_NUMBER = '447520651240';
 
 app.use(bodyParser.json());
-
+app.use(forms.array()); 
+app.use(bodyParser.urlencoded({ extended: true }));
 // Create an empty object to store the OTPs
 const otps = {};
 
@@ -25,6 +28,7 @@ function generateVerificationCode() {
 app.post('/send-verification-code', async (req, res) => {
   try {
     const { phoneNumber } = req.body;
+    console.log(`Request : ${phoneNumber}`);
     const verificationCode = generateVerificationCode();
     sendOtp(phoneNumber,verificationCode,res);
 
@@ -36,8 +40,10 @@ app.post('/send-verification-code', async (req, res) => {
 
 // API endpoint to verify OTP and return JWT
 app.post('/verify-otp', (req, res) => {
+  
   try {
     const { phoneNumber, otp } = req.body;
+    console.log(`Request : ${phoneNumber} OTP ${otp}`);
     const expectedVerificationCode = otps[phoneNumber]; // Replace with the expected OTP
 
     // Verify the received OTP
@@ -78,7 +84,12 @@ async function sendOtp(phoneNumber,otp,res) {
     );
   
     const data = await resp.json();
-    otps[phoneNumber] = otp;
-    res.status(200).json({ message: "OTP Sent Successfully" });
+    if(data.error == null){
+      otps[phoneNumber] = otp;
+      res.status(200).json({ message: `OTP Sent Successfully ${otp}` });
+    }
+    else {
+      res.status(404).json({message:"Error sending Otp"})
+    }
 
   }
