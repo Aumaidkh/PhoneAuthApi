@@ -1,16 +1,17 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import jwt from 'jsonwebtoken';
-import fetch from 'node-fetch';
-import multer from 'multer';
+
+const express = require("express");
+const bodyParser = require("body-parser");
+const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const twilio = require('twilio');
 
 const app = express();
 const port = process.env.PORT || 3000;
 var forms = multer();
 
-const SERVICE_PLAN_ID = '0f9ff0a88b2e454c9a99d8f7aa956aae';
-const API_TOKEN = '408afafaf0df46c5a29feb06f5f38c11';
-const SINCH_NUMBER = '447520651240';
+const ACCOUNT_SID = "AC14242f136f18bcb5509ed2b9367076ef"
+const AUTH_TOKEN = "76cd6322a10da2ed2c0b8830cd3600d0"
+const PHONE = "+12762778506"
 
 app.use(bodyParser.json());
 app.use(forms.array()); 
@@ -18,6 +19,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Create an empty object to store the OTPs
 const otps = {};
 
+
+// Twilio credentials (get these from your Twilio account)
+
+const client = twilio(ACCOUNT_SID, AUTH_TOKEN);
 
 // Generate a random verification code
 function generateVerificationCode() {
@@ -67,29 +72,19 @@ app.listen(port, () => {
 });
 
 async function sendOtp(phoneNumber,otp,res) {
-    const resp = await fetch(
-      'https://us.sms.api.sinch.com/xms/v1/' + SERVICE_PLAN_ID + '/batches',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + API_TOKEN
-        },
-        body: JSON.stringify({
-          from: SINCH_NUMBER,
-          to: [phoneNumber],
-          body: `Your OTP for signing into Mimo is ${otp}`
-        })
-      }
-    );
-  
-    const data = await resp.json();
-    if(data.error == null){
-      otps[phoneNumber] = otp;
-      res.status(200).json({ message: `OTP Sent Successfully ${otp}` });
-    }
-    else {
-      res.status(404).json({message:"Error sending Otp"})
-    }
+  client.messages
+  .create({
+    body: `Your OTP is ${otp}`,
+    from: PHONE,
+    to: phoneNumber,
+  })
+  .then(() => {
+    otps[phoneNumber] = otp
+    res.status(200).json({message:"OTP Sent Successfully"});
+  })
+  .catch((error) => {
+    console.error(error);
+    res.status(500).end();
+  });
 
   }
