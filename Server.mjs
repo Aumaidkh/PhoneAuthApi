@@ -11,8 +11,8 @@ var forms = multer();
 
 
 
-const VONAGE_API_KEY = 'YOUR API KEY HERE';
-const API_SECRET = 'YOUR API SECRET HERE';
+const VONAGE_API_KEY = 'aeee2668';
+const API_SECRET = 'ql43KH0PEx9FF2CW';
 
 const vonage = new Vonage({
   apiKey: VONAGE_API_KEY,
