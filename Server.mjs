@@ -1,17 +1,23 @@
-
-const express = require("express");
-const bodyParser = require("body-parser");
-const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const twilio = require('twilio');
+import express from 'express';
+import bodyParser from 'body-parser';
+import jwt from 'jsonwebtoken';
+import fetch from 'node-fetch';
+import multer from 'multer';
+import { Vonage } from '@vonage/server-sdk';
 
 const app = express();
 const port = process.env.PORT || 3000;
 var forms = multer();
 
-const ACCOUNT_SID = "AC4b34ab217fc1840f07425b7f7e7db05c"
-const AUTH_TOKEN = "5294ea9891a9e966f1fb00794a837075"
-const PHONE = "+17542272250"
+
+
+const VONAGE_API_KEY = 'Your Vonage API Key Here';
+const API_SECRET = 'Your Api Secret Here';
+
+const vonage = new Vonage({
+  apiKey: VONAGE_API_KEY,
+  apiSecret: API_SECRET
+})
 
 app.use(bodyParser.json());
 app.use(forms.array()); 
@@ -19,10 +25,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Create an empty object to store the OTPs
 const otps = {};
 
-
-// Twilio credentials (get these from your Twilio account)
-
-const client = twilio(ACCOUNT_SID, AUTH_TOKEN);
 
 // Generate a random verification code
 function generateVerificationCode() {
@@ -71,20 +73,19 @@ app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
-async function sendOtp(phoneNumber,otp,res) {
-  client.messages
-  .create({
-    body: `Your OTP is ${otp}`,
-    from: PHONE,
-    to: phoneNumber,
-  })
-  .then(() => {
-    otps[phoneNumber] = otp
-    res.status(200).json({message:"OTP Sent Successfully"});
-  })
-  .catch((error) => {
-    console.error(error);
-    res.status(500).end();
-  });
 
+
+async function sendOtp(phoneNumber,otp,res) {
+  const from = "Mimo"
+  const to = phoneNumber
+  const text = `Your OTP for Mimo is ${otp}`
+  await vonage.sms.send({to, from, text})
+  .then(resp => { 
+    console.log('Message sent successfully'); console.log(resp);
+    res.status(200).json({message:"Sent OTP"})
+   })
+  .catch(err => { 
+    console.log('There was an error sending the messages.'); console.error(err);
+    res.status(500).json({error:err})
+   });
   }
