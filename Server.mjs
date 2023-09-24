@@ -11,8 +11,8 @@ var forms = multer();
 
 
 
-const VONAGE_API_KEY = 'Your Vonage API Key Here';
-const API_SECRET = 'Your Api Secret Here';
+const VONAGE_API_KEY = 'YOUR API KEY HERE';
+const API_SECRET = 'YOUR API SECRET HERE';
 
 const vonage = new Vonage({
   apiKey: VONAGE_API_KEY,
@@ -81,8 +81,8 @@ async function sendOtp(phoneNumber,otp,res) {
   const text = `Your OTP for Mimo is ${otp}`
   await vonage.sms.send({to, from, text})
   .then(resp => { 
-    console.log('Message sent successfully'); console.log(resp);
-    res.status(200).json({message:"Sent OTP"})
+    otps[phoneNumber] = otp;
+    res.status(200).json({message:"OTP Sent Successfully"})
    })
   .catch(err => { 
     console.log('There was an error sending the messages.'); console.error(err);
